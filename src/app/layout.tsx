@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
+import { Header } from "@/components/ui/header"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "App",
-  description: "",
+  title: "devroast",
+  description: "paste your code. get roasted.",
 }
 
 export default function RootLayout({
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body className="min-h-screen bg-bg text-text-primary">
+        <Header />
+        {children}
+      </body>
     </html>
   )
 }
