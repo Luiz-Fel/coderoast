@@ -1,1 +1,91 @@
 @import "tailwindcss";
+
+@theme {
+  /* Brand / Accent */
+  --color-brand: #10b981;
+  --color-brand-dim: #0a1a0f;
+  --color-accent-green: #10b981;
+  --color-accent-red: #ef4444;
+  --color-accent-amber: #f59e0b;
+  --color-accent-cyan: #06b6d4;
+
+  /* Backgrounds */
+  --color-bg: #0a0a0a;
+  --color-bg-surface: #0f0f0f;
+  --color-bg-elevated: #1a1a1a;
+
+  /* Borders */
+  --color-border: #2a2a2a;
+  --color-border-focus: #10b981;
+
+  /* Text */
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #4b5563;
+  --color-text-muted: #a0a0a0;
+
+  /* Severity */
+  --color-critical: #ef4444;
+  --color-critical-dim: #1a0a0a;
+  --color-warning: #f59e0b;
+  --color-good: #10b981;
+
+  /* Syntax highlighting */
+  --color-syntax-fn: #ffc799;
+  --color-syntax-keyword: #a0a0a0;
+  --color-syntax-string: #99ffe4;
+  --color-syntax-number: #ffc799;
+  --color-syntax-type: #ffc799;
+  --color-syntax-variable: #ffffff;
+  --color-syntax-property: #a0a0a0;
+  --color-syntax-operator: #a0a0a0;
+  --color-syntax-base: #a0a0a0;
+
+  /* Typography */
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-mono-alt: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Spacing scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 40px;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    cursor: pointer;
+    transition-property: color, background-color, border-color, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  :focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow:
+      0 0 0 2px var(--color-bg, #0a0a0a),
+      0 0 0 4px var(--color-border-focus, #10b981);
+  }
+
+  :disabled,
+  [aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
