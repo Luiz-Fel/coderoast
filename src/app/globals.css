@@ -109,3 +109,34 @@
   margin: 0;
   padding: 0;
 }
+
+/* ── Code editor scrollbar ───────────────────────────────────────────────────
+   Thin, subtle scrollbar consistent with the dark theme.
+   Applies to the scroll wrapper div that is the single scroll container.
+──────────────────────────────────────────────────────────────────────────── */
+.code-editor-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.code-editor-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.code-editor-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.code-editor-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.code-editor-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+.code-editor-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
