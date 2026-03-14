@@ -89,3 +89,23 @@
     opacity: 0.5;
   }
 }
+
+/* ── Code editor overlay ─────────────────────────────────────────────────────
+   The HighlightedOverlay renders Shiki's <pre><code> output absolutely
+   positioned on top of the invisible textarea. These rules force the
+   Shiki output to match the textarea's exact font metrics so that the
+   syntax colors line up pixel-perfectly with the cursor.
+──────────────────────────────────────────────────────────────────────────── */
+.code-editor-overlay pre,
+.code-editor-overlay pre code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  background: transparent;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+  tab-size: 2;
+  margin: 0;
+  padding: 0;
+}

