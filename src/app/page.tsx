@@ -83,24 +83,29 @@ export default function Home() {
           {/* table */}
           <div className="flex flex-col border border-border">
             {/* table header */}
-            <div className="flex items-center gap-6 border-border border-b bg-bg-surface px-5 py-2.5">
-              <span className="w-10 shrink-0 font-mono text-text-tertiary text-xs">rank</span>
-              <span className="w-15 shrink-0 font-mono text-text-tertiary text-xs">score</span>
-              <span className="min-w-0 flex-1 font-mono text-text-tertiary text-xs">code</span>
-              <span className="w-25 shrink-0 text-right font-mono text-text-tertiary text-xs">
-                lang
-              </span>
-            </div>
+            <LeaderboardRow.Root className="border-b bg-bg-surface py-2.5">
+              <LeaderboardRow.Rank asLabel>
+                <span className="font-mono text-text-tertiary text-xs">rank</span>
+              </LeaderboardRow.Rank>
+              <LeaderboardRow.Score>
+                <span className="font-mono text-text-tertiary text-xs">score</span>
+              </LeaderboardRow.Score>
+              <LeaderboardRow.Code>
+                <span className="font-mono text-text-tertiary text-xs">code</span>
+              </LeaderboardRow.Code>
+              <LeaderboardRow.Language>
+                <span className="font-mono text-text-tertiary text-xs">lang</span>
+              </LeaderboardRow.Language>
+            </LeaderboardRow.Root>
 
             {/* rows */}
             {MOCK_LEADERBOARD.map((row) => (
-              <LeaderboardRow
-                key={row.rank}
-                rank={row.rank}
-                score={row.score}
-                codePreview={row.codePreview}
-                language={row.language}
-              />
+              <LeaderboardRow.Root key={row.rank}>
+                <LeaderboardRow.Rank>{row.rank}</LeaderboardRow.Rank>
+                <LeaderboardRow.Score value={row.score} />
+                <LeaderboardRow.Code>{row.codePreview}</LeaderboardRow.Code>
+                <LeaderboardRow.Language>{row.language}</LeaderboardRow.Language>
+              </LeaderboardRow.Root>
             ))}
           </div>
 

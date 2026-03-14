@@ -119,21 +119,30 @@ export default async function ComponentsPage() {
         {/* AnalysisCard */}
         <Section title="AnalysisCard">
           <div className="grid grid-cols-3 gap-4">
-            <AnalysisCard
-              variant="good"
-              title="Naming conventions"
-              description="Variables and functions follow camelCase consistently. No ambiguous abbreviations found."
-            />
-            <AnalysisCard
-              variant="warning"
-              title="Error handling"
-              description="Some async calls are missing try/catch blocks. Unhandled rejections may crash the process."
-            />
-            <AnalysisCard
-              variant="critical"
-              title="SQL injection risk"
-              description="User input is concatenated directly into the query string without sanitization or parameterization."
-            />
+            <AnalysisCard.Root>
+              <AnalysisCard.Badge variant="good" />
+              <AnalysisCard.Title>Naming conventions</AnalysisCard.Title>
+              <AnalysisCard.Description>
+                Variables and functions follow camelCase consistently. No ambiguous abbreviations
+                found.
+              </AnalysisCard.Description>
+            </AnalysisCard.Root>
+            <AnalysisCard.Root>
+              <AnalysisCard.Badge variant="warning" />
+              <AnalysisCard.Title>Error handling</AnalysisCard.Title>
+              <AnalysisCard.Description>
+                Some async calls are missing try/catch blocks. Unhandled rejections may crash the
+                process.
+              </AnalysisCard.Description>
+            </AnalysisCard.Root>
+            <AnalysisCard.Root>
+              <AnalysisCard.Badge variant="critical" />
+              <AnalysisCard.Title>SQL injection risk</AnalysisCard.Title>
+              <AnalysisCard.Description>
+                User input is concatenated directly into the query string without sanitization or
+                parameterization.
+              </AnalysisCard.Description>
+            </AnalysisCard.Root>
           </div>
         </Section>
 
@@ -153,7 +162,10 @@ export default async function ComponentsPage() {
 
         {/* CodeBlock */}
         <Section title="CodeBlock">
-          <CodeBlock code={SAMPLE_CODE} lang="typescript" filename="roast.ts" />
+          <CodeBlock.Root>
+            <CodeBlock.Header filename="roast.ts" />
+            <CodeBlock.Body code={SAMPLE_CODE} lang="typescript" />
+          </CodeBlock.Root>
         </Section>
 
         <div className="h-px w-full bg-border" />
@@ -161,24 +173,30 @@ export default async function ComponentsPage() {
         {/* LeaderboardRow */}
         <Section title="LeaderboardRow">
           <div className="flex flex-col overflow-hidden rounded border border-border">
-            <LeaderboardRow
-              rank={1}
-              score={9.4}
-              codePreview="function fibonacci(n) { if (n <= 1) return n; return fib..."
-              language="TypeScript"
-            />
-            <LeaderboardRow
-              rank={2}
-              score={6.1}
-              codePreview={'SELECT * FROM users WHERE id = " + req.params.id'}
-              language="SQL"
-            />
-            <LeaderboardRow
-              rank={3}
-              score={2.3}
-              codePreview="var x=1;var y=2;var z=x+y;console.log(z)"
-              language="JavaScript"
-            />
+            <LeaderboardRow.Root>
+              <LeaderboardRow.Rank>1</LeaderboardRow.Rank>
+              <LeaderboardRow.Score value={9.4} />
+              <LeaderboardRow.Code>
+                {"function fibonacci(n) { if (n <= 1) return n; return fib..."}
+              </LeaderboardRow.Code>
+              <LeaderboardRow.Language>TypeScript</LeaderboardRow.Language>
+            </LeaderboardRow.Root>
+            <LeaderboardRow.Root>
+              <LeaderboardRow.Rank>2</LeaderboardRow.Rank>
+              <LeaderboardRow.Score value={6.1} />
+              <LeaderboardRow.Code>
+                {'SELECT * FROM users WHERE id = " + req.params.id'}
+              </LeaderboardRow.Code>
+              <LeaderboardRow.Language>SQL</LeaderboardRow.Language>
+            </LeaderboardRow.Root>
+            <LeaderboardRow.Root>
+              <LeaderboardRow.Rank>3</LeaderboardRow.Rank>
+              <LeaderboardRow.Score value={2.3} />
+              <LeaderboardRow.Code>
+                {"var x=1;var y=2;var z=x+y;console.log(z)"}
+              </LeaderboardRow.Code>
+              <LeaderboardRow.Language>JavaScript</LeaderboardRow.Language>
+            </LeaderboardRow.Root>
           </div>
         </Section>
       </div>
