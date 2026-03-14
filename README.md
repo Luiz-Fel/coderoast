@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CodeRoast
 
-## Getting Started
+**Paste your code. Get roasted.**
 
-First, run the development server:
+CodeRoast is a web app that rates your code from 0 to 10 and delivers brutally honest — and occasionally hilarious — AI feedback. Think of it as a code review from a senior engineer who has no filter.
+
+## What it does
+
+- **Paste any code snippet** in the editor — any language works
+- **Choose your mode**: _Brutally Honest_ for straight feedback, or _Full Roast_ for maximum savagery
+- **Get a score from 0 to 10** along with a detailed breakdown of what's wrong (and what's not)
+- **See how you rank** on the public shame leaderboard — the worst code on the internet, ranked
+
+## The Shame Leaderboard
+
+Every roast is submitted to a public leaderboard. Lower scores bubble to the top. It's the one ranking where you don't want first place.
+
+## Running locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000).
