@@ -2,6 +2,9 @@ import type { ComponentProps } from "react"
 import type { BundledLanguage } from "shiki"
 import { codeToHtml } from "shiki"
 import { twMerge } from "tailwind-merge"
+import { CodeBlockHeader } from "./code-block-header"
+
+export type { CodeBlockHeaderProps } from "./code-block-header"
 
 // ── Root ──────────────────────────────────────────────────────────────────────
 
@@ -15,28 +18,6 @@ function CodeBlockRoot({ className, children, ...props }: CodeBlockRootProps) {
     >
       {children}
     </figure>
-  )
-}
-
-// ── Header ────────────────────────────────────────────────────────────────────
-
-export type CodeBlockHeaderProps = ComponentProps<"div"> & {
-  filename?: string
-}
-
-function CodeBlockHeader({ filename, className, children, ...props }: CodeBlockHeaderProps) {
-  return (
-    <div
-      className={twMerge("flex h-10 items-center gap-3 border-b border-border px-4", className)}
-      {...props}
-    >
-      <span className="size-2.5 rounded-full bg-accent-red" aria-hidden />
-      <span className="size-2.5 rounded-full bg-accent-amber" aria-hidden />
-      <span className="size-2.5 rounded-full bg-accent-green" aria-hidden />
-      <span className="flex-1" />
-      {filename && <span className="font-mono text-text-tertiary text-xs">{filename}</span>}
-      {children}
-    </div>
   )
 }
 

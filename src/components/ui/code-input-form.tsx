@@ -31,6 +31,43 @@ const MOCK_CODE = `function calculateTotal(items) {
 const LINE_HEIGHT_PX = 13 * 1.6 // 20.8
 const EDITOR_PADDING_Y = 12
 
+// Widths (%) for skeleton line bars — 0 means an empty line gap
+const SKELETON_LINE_WIDTHS = [
+  34, // function calculateTotal(items) {
+  16, // var total = 0;
+  43, // for (var i = 0; i < items.length; i++) {
+  37, // total = total + items[i].price;
+  3, // }
+  0, // empty line
+  16, // if (total > 100) {
+  37, // console.log("discount applied");
+  18, // total = total * 0.9;
+  3, // }
+  0, // empty line
+  35, // // TODO: handle tax calculation
+  37, // // TODO: handle currency conversion
+  16, // return total
+  3, // }
+]
+
+const MOBILE_SKELETON_LINE_WIDTHS = [
+  64, // function calculateTotal(items) {
+  32, // var total = 0;
+  80, // for (var i = 0; i < items.length; i++) {
+  70, // total = total + items[i].price;
+  6, // }
+  0, // empty line
+  40, // if (total > 100) {
+  72, // console.log("discount applied");
+  48, // total = total * 0.9;
+  6, // }
+  0, // empty line
+  66, // // TODO: handle tax calculation
+  74, // // TODO: handle currency conversion
+  28, // return total
+  6, // }
+]
+
 // ─── Language Selector ────────────────────────────────────────────────────────
 
 type LanguageSelectorProps = {
@@ -78,6 +115,7 @@ export function CodeInputForm() {
   const [detectedLang, setDetectedLang] = useState<string>("javascript")
   const [selectedLang, setSelectedLang] = useState<string | null>(null)
   const activeLang = selectedLang ?? detectedLang
+  const [isOverlayReady, setIsOverlayReady] = useState(false)
 
   const activeLangRef = useRef(activeLang)
   useEffect(() => {
@@ -101,6 +139,7 @@ export function CodeInputForm() {
   const setOverlayHtml = useCallback((html: string) => {
     const el = overlayRef.current
     if (el) el.innerHTML = html
+    setIsOverlayReady(html.length > 0)
   }, [])
 
   const renderPlainOverlay = useCallback(
@@ -125,19 +164,21 @@ export function CodeInputForm() {
 
   // ── Initial highlight on mount ─────────────────────────────────────────────
   useEffect(() => {
+    renderPlainOverlay(MOCK_CODE)
     applyHighlight(MOCK_CODE, "javascript")
-  }, [applyHighlight])
+  }, [applyHighlight, renderPlainOverlay])
 
   // ── Debounced highlight (150 ms) ──────────────────────────────────────────
   useEffect(() => {
     if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
     highlightTimerRef.current = setTimeout(() => {
+      renderPlainOverlay(code)
       applyHighlight(code, activeLangRef.current)
     }, 150)
     return () => {
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
     }
-  }, [code, applyHighlight])
+  }, [code, applyHighlight, renderPlainOverlay])
 
   // ── Debounced language detection (500 ms) ─────────────────────────────────
   useEffect(() => {
@@ -300,6 +341,34 @@ export function CodeInputForm() {
                 aria-hidden
                 className="code-editor-overlay pointer-events-none absolute inset-0 px-4 py-3"
               />
+
+              {/* skeleton overlay — shown while Shiki highlight is loading */}
+              {!isOverlayReady && (
+                <div aria-hidden className="pointer-events-none absolute inset-0 px-4 py-3">
+                  {/* desktop widths — hidden on mobile */}
+                  <div className="hidden sm:block">
+                    {SKELETON_LINE_WIDTHS.map((width, i) => (
+                      <div
+                        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, order never changes
+                        key={i}
+                        className="mb-[7.8px] h-[13px] animate-pulse rounded-sm bg-bg-elevated"
+                        style={{ width: width === 0 ? 0 : `${width}%` }}
+                      />
+                    ))}
+                  </div>
+                  {/* mobile widths — hidden on desktop */}
+                  <div className="block sm:hidden">
+                    {MOBILE_SKELETON_LINE_WIDTHS.map((width, i) => (
+                      <div
+                        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, order never changes
+                        key={i}
+                        className="mb-[7.8px] h-[13px] animate-pulse rounded-sm bg-bg-elevated"
+                        style={{ width: width === 0 ? 0 : `${width}%` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* textarea: in-flow, height set to scrollHeight via useLayoutEffect
                   wrap="off" keeps lines intact so selection aligns with overlay */}
