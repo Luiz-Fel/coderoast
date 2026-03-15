@@ -9,6 +9,8 @@ import { detectLanguage } from "@/lib/detect-language"
 import { getLanguageLabel, SUPPORTED_LANGUAGES } from "@/lib/languages"
 import { highlightCode } from "@/lib/shiki-client"
 
+const MAX_CHARS = 2000
+
 const MOCK_CODE = `function calculateTotal(items) {
   var total = 0;
   for (var i = 0; i < items.length; i++) {
@@ -225,6 +227,9 @@ export function CodeInputForm() {
   // stay aligned as the user scrolls.
   const gutterHeight = lineCount * LINE_HEIGHT_PX + EDITOR_PADDING_Y * 2
 
+  const charCount = code.length
+  const isOverLimit = charCount > MAX_CHARS
+
   function handleSubmit() {
     router.push("/roast")
   }
@@ -325,6 +330,18 @@ export function CodeInputForm() {
             </div>
           </div>
         </div>
+
+        {/* editor footer — char counter */}
+        <div className="flex items-center justify-end border-border border-t px-4 py-1.5">
+          <span
+            className={[
+              "font-mono text-[11px] tabular-nums transition-colors",
+              isOverLimit ? "text-accent-red" : "text-text-tertiary",
+            ].join(" ")}
+          >
+            {charCount}/{MAX_CHARS}
+          </span>
+        </div>
       </div>
 
       {/* actions bar */}
@@ -335,7 +352,7 @@ export function CodeInputForm() {
             {"// maximum sarcasm enabled"}
           </span>
         </div>
-        <Button variant="primary" onClick={handleSubmit}>
+        <Button variant="primary" onClick={handleSubmit} disabled={isOverLimit}>
           $ roast_my_code
         </Button>
       </div>
