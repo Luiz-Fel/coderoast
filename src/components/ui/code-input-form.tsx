@@ -137,7 +137,7 @@ export function CodeInputForm() {
     return () => {
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
     }
-  }, [code, activeLang, applyHighlight])
+  }, [code, applyHighlight])
 
   // ── Debounced language detection (500 ms) ─────────────────────────────────
   useEffect(() => {
@@ -161,7 +161,7 @@ export function CodeInputForm() {
     // Reset to auto first so shrinking content reduces the height correctly
     textarea.style.height = "auto"
     textarea.style.height = `${textarea.scrollHeight}px`
-  }, [code])
+  }, [])
 
   // ── Scroll sync: gutter follows the scroll wrapper ────────────────────────
   // The overlay scrolls naturally with the wrapper (it's in the same scroll
@@ -235,7 +235,7 @@ export function CodeInputForm() {
   }
 
   return (
-    <div className="flex w-full max-w-[780px] flex-col gap-4">
+    <div className="flex w-full max-w-195 flex-col gap-4">
       {/* editor shell */}
       <div className="overflow-hidden border border-border bg-[#101010]">
         {/* window chrome header */}
