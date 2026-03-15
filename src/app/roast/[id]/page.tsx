@@ -6,6 +6,7 @@ import { AnalysisCard } from "@/components/ui/analysis-card"
 import { CodeBlock } from "@/components/ui/code-block"
 import { DiffLine } from "@/components/ui/diff-line"
 import { ScoreRing } from "@/components/ui/score-ring"
+import { ShareButton } from "@/components/ui/share-button"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,15 @@ const VERDICT_LABELS: Record<string, string> = {
   needs_serious_help: "needs serious help",
 }
 
+type VerdictColor = "text-good" | "text-warning" | "text-critical"
+type DotColor = "bg-accent-green" | "bg-accent-amber" | "bg-accent-red"
+
+function scoreToVerdictColor(score: number): { text: VerdictColor; dot: DotColor } {
+  if (score > 7) return { text: "text-good", dot: "bg-accent-green" }
+  if (score >= 4) return { text: "text-warning", dot: "bg-accent-amber" }
+  return { text: "text-critical", dot: "bg-accent-red" }
+}
+
 function parseDiff(diff: string): { type: "added" | "removed" | "context"; code: string }[] {
   return diff.split("\n").map((line) => {
     if (line.startsWith("+") && !line.startsWith("+++"))
@@ -24,6 +34,21 @@ function parseDiff(diff: string): { type: "added" | "removed" | "context"; code:
       return { type: "removed", code: line.slice(1) }
     return { type: "context", code: line.startsWith(" ") ? line.slice(1) : line }
   })
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function SectionHeader({ prompt, title }: { prompt: string; title: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-bold font-mono text-brand text-sm">{prompt}</span>
+      <span className="font-bold font-mono text-sm text-text-primary">{title}</span>
+    </div>
+  )
+}
+
+function Divider() {
+  return <div className="h-px w-full bg-border" />
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -40,14 +65,12 @@ export default async function RoastPage({ params }: Props) {
 
   const lang = (roast.language ?? "text") as BundledLanguage
   const diffLines = roast.suggestedFix ? parseDiff(roast.suggestedFix) : []
-
-  const criticals = roast.issues.filter((i) => i.severity === "critical")
-  const warnings = roast.issues.filter((i) => i.severity === "warning")
-  const goods = roast.issues.filter((i) => i.severity === "good")
+  const { text: verdictText, dot: verdictDot } = scoreToVerdictColor(roast.score)
+  const ext = roast.language ?? "txt"
 
   return (
     <main className="pb-20">
-      <div className="mx-auto flex max-w-[960px] flex-col gap-12 px-5 pt-12">
+      <div className="mx-auto flex max-w-[960px] flex-col gap-10 px-5 pt-12">
         {/* ── back link ── */}
         <Link
           href="/"
@@ -56,104 +79,90 @@ export default async function RoastPage({ params }: Props) {
           &lt;&lt; back_to_home
         </Link>
 
-        {/* ── score + verdict ── */}
-        <section className="flex flex-col items-center gap-6 text-center">
+        {/* ── score hero ── */}
+        <section className="flex items-center gap-12">
           <ScoreRing score={roast.score} />
-          <div className="flex flex-col gap-2">
-            <span className="font-mono text-text-tertiary text-xs uppercase tracking-widest">
-              verdict: {VERDICT_LABELS[roast.verdict] ?? roast.verdict}
-            </span>
-            <p className="max-w-xl font-['IBM_Plex_Mono',ui-monospace,monospace] text-sm text-text-secondary">
+
+          <div className="flex flex-1 flex-col gap-4">
+            {/* verdict badge */}
+            <div className="flex items-center gap-2">
+              <span className={`size-2 shrink-0 rounded-full ${verdictDot}`} />
+              <span className={`font-medium font-mono text-xs ${verdictText}`}>
+                verdict: {VERDICT_LABELS[roast.verdict] ?? roast.verdict}
+              </span>
+            </div>
+
+            {/* roast quote */}
+            <p className="font-['IBM_Plex_Mono',ui-monospace,monospace] text-text-primary text-xl leading-relaxed">
               {`"${roast.roastQuote}"`}
             </p>
-          </div>
-          <div className="flex items-center gap-4 font-mono text-text-tertiary text-xs">
-            <span>{roast.lineCount} lines</span>
-            <span>·</span>
-            <span>{roast.language ?? "unknown"}</span>
-            <span>·</span>
-            <span>{roast.mode === "full_roast" ? "full roast mode" : "brutally honest"}</span>
+
+            {/* meta */}
+            <div className="flex items-center gap-4 font-mono text-text-tertiary text-xs">
+              <span>lang: {roast.language ?? "unknown"}</span>
+              <span>·</span>
+              <span>{roast.lineCount} lines</span>
+            </div>
+
+            {/* share */}
+            <div className="flex items-center">
+              <ShareButton />
+            </div>
           </div>
         </section>
 
+        <Divider />
+
         {/* ── submitted code ── */}
         <section className="flex flex-col gap-4">
-          <h2 className="font-mono text-text-tertiary text-xs uppercase tracking-widest">
-            {"// submitted_code"}
-          </h2>
+          <SectionHeader prompt="//" title="your_submission" />
           <CodeBlock.Root>
-            <CodeBlock.Header filename={`submission.${roast.language ?? "txt"}`} />
+            <CodeBlock.Header filename={`submission.${ext}`} />
             <CodeBlock.Body code={roast.code} lang={lang} />
           </CodeBlock.Root>
         </section>
 
-        {/* ── analysis ── */}
+        {roast.issues.length > 0 && <Divider />}
+
+        {/* ── detailed analysis ── */}
         {roast.issues.length > 0 && (
           <section className="flex flex-col gap-6">
-            <h2 className="font-mono text-text-tertiary text-xs uppercase tracking-widest">
-              {"// analysis"}
-            </h2>
+            <SectionHeader prompt="//" title="detailed_analysis" />
 
-            {criticals.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <span className="font-mono text-critical text-xs">
-                  critical ({criticals.length})
-                </span>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {criticals.map((issue) => (
-                    <AnalysisCard.Root key={issue.id}>
-                      <AnalysisCard.Badge variant="critical" />
-                      <AnalysisCard.Title>{issue.title}</AnalysisCard.Title>
-                      <AnalysisCard.Description>{issue.description}</AnalysisCard.Description>
-                    </AnalysisCard.Root>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {warnings.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <span className="font-mono text-warning text-xs">warnings ({warnings.length})</span>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {warnings.map((issue) => (
-                    <AnalysisCard.Root key={issue.id}>
-                      <AnalysisCard.Badge variant="warning" />
-                      <AnalysisCard.Title>{issue.title}</AnalysisCard.Title>
-                      <AnalysisCard.Description>{issue.description}</AnalysisCard.Description>
-                    </AnalysisCard.Root>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {goods.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <span className="font-mono text-good text-xs">good ({goods.length})</span>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {goods.map((issue) => (
-                    <AnalysisCard.Root key={issue.id}>
-                      <AnalysisCard.Badge variant="good" />
-                      <AnalysisCard.Title>{issue.title}</AnalysisCard.Title>
-                      <AnalysisCard.Description>{issue.description}</AnalysisCard.Description>
-                    </AnalysisCard.Root>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="grid grid-cols-2 gap-5">
+              {roast.issues.map((issue) => (
+                <AnalysisCard.Root key={issue.id}>
+                  <AnalysisCard.Badge variant={issue.severity} />
+                  <AnalysisCard.Title>{issue.title}</AnalysisCard.Title>
+                  <AnalysisCard.Description>{issue.description}</AnalysisCard.Description>
+                </AnalysisCard.Root>
+              ))}
+            </div>
           </section>
         )}
 
-        {/* ── suggested fix diff ── */}
+        {diffLines.length > 0 && <Divider />}
+
+        {/* ── suggested fix ── */}
         {diffLines.length > 0 && (
           <section className="flex flex-col gap-4">
-            <h2 className="font-mono text-text-tertiary text-xs uppercase tracking-widest">
-              {"// suggested_fix"}
-            </h2>
-            <div className="flex flex-col overflow-hidden border border-border">
-              {diffLines.map((line, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: diff lines have no stable id
-                <DiffLine key={i} type={line.type} code={line.code} />
-              ))}
+            <SectionHeader prompt="//" title="suggested_fix" />
+
+            <div className="overflow-hidden border border-border">
+              {/* diff header */}
+              <CodeBlock.Header>
+                <span className="font-medium font-mono text-text-secondary text-xs">
+                  submission.{ext} → improved.{ext}
+                </span>
+              </CodeBlock.Header>
+
+              {/* diff lines */}
+              <div className="flex flex-col">
+                {diffLines.map((line, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: diff lines have no stable id
+                  <DiffLine key={i} type={line.type} code={line.code} />
+                ))}
+              </div>
             </div>
           </section>
         )}
