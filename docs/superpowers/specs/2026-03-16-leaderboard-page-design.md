@@ -5,7 +5,7 @@
 
 ## Goal
 
-Wire the `/leaderboard` page to real database data. Replace static mock entries and stats with live tRPC-backed Server Components, using the same patterns already established in the homepage (`LeaderboardPreview`, `RoastMetrics`).
+Wire the `/leaderboard` page to real database data. Replace static mock entries and stats with live tRPC-backed Server Components, using the same patterns already established in the homepage (`LeaderboardPreview`, `RoastMetrics`). Cache both the stats and leaderboard queries for 1 hour so the DB is not hit on every request.
 
 ---
 
@@ -15,19 +15,33 @@ Wire the `/leaderboard` page to real database data. Replace static mock entries 
 - Reuse `LeaderboardCard` (with show-more expand, fade overlay, Shiki syntax highlight, "view roast" link) — no new card design.
 - Follow the existing Server Component + Suspense + skeleton loading pattern.
 - No new tRPC procedures needed; `roasts.leaderboard({ limit: 20 })` and `roasts.stats()` already exist and cover all required data.
+- Cache leaderboard and stats data for 1 hour using `unstable_cache` from `next/cache`.
 
 ---
 
 ## Architecture
 
-No backend changes. The existing `roasts.leaderboard` procedure accepts `limit: 1–50` and returns all fields `LeaderboardCard` needs. Stats come from `roasts.stats()`.
+### Caching strategy
+
+`caller.roasts.*()` calls Drizzle directly in-process — Next.js's `fetch()` cache does not apply. The correct approach is `unstable_cache` from `next/cache`, which wraps any async function and caches its return value in Next.js's Data Cache with ISR semantics.
+
+Two cached functions are added to `src/trpc/routers/roasts.ts`:
+
+- `getCachedStats` — wraps the stats DB query, cache key `["roasts-stats"]`, tag `"roasts-stats"`, `revalidate: 3600`
+- `getCachedLeaderboard` — wraps the leaderboard DB query, cache key `["roasts-leaderboard"]`, tag `"roasts-leaderboard"`, `revalidate: 3600`
+
+Inside `unstable_cache` callbacks, `db` is imported directly from `@/db` rather than taken from `ctx.db` — the value is identical (same module-level singleton), but `ctx` is not available in the serialized cache closure.
+
+The tRPC procedures delegate to these cached functions. No component changes are needed.
+
+### Data flow
 
 ```
 LeaderboardPage (Server Component)
   └─ <Suspense fallback={<RoastMetricsSkeleton />}>
-       └─ <RoastMetrics />  →  caller.roasts.stats()
+       └─ <RoastMetrics />  →  caller.roasts.stats()  →  getCachedStats()  →  DB (cached 1h)
   └─ <Suspense fallback={<LeaderboardFullSkeleton />}>
-       └─ <LeaderboardFull />  →  caller.roasts.leaderboard({ limit: 20 })
+       └─ <LeaderboardFull />  →  caller.roasts.leaderboard({ limit: 20 })  →  getCachedLeaderboard(20)  →  DB (cached 1h)
             └─ LeaderboardCard × 20
                  └─ <CodeBlock.Body> (Shiki, async Server Component)
 ```
@@ -66,6 +80,7 @@ Use a `SKELETON_LINE_COUNTS` constant array (e.g. `[8, 5, 12, 7, 10]`) to vary t
 
 | File | Action |
 |------|--------|
+| `src/trpc/routers/roasts.ts` | Update — add `unstable_cache` wrappers |
 | `src/components/ui/leaderboard-full.tsx` | Create |
 | `src/app/leaderboard/page.tsx` | Update |
 
@@ -73,7 +88,6 @@ Use a `SKELETON_LINE_COUNTS` constant array (e.g. `[8, 5, 12, 7, 10]`) to vary t
 
 | File | Reason |
 |------|--------|
-| `src/trpc/routers/roasts.ts` | `leaderboard` procedure already supports limit 1–50 |
 | `src/components/ui/leaderboard-card.tsx` | Reused as-is |
 | `src/components/ui/code-block.tsx` | Reused as-is |
 | `src/components/ui/roast-metrics.tsx` | Reused as-is |
