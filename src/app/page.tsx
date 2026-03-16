@@ -1,10 +1,12 @@
 import Link from "next/link"
-import { getLeaderboard, getLeaderboardStats } from "@/app/actions/get-leaderboard"
+import { Suspense } from "react"
+import { getLeaderboard } from "@/app/actions/get-leaderboard"
 import { CodeInputForm } from "@/components/ui/code-input-form"
 import { LeaderboardRow } from "@/components/ui/leaderboard-row"
+import { RoastMetrics, RoastMetricsSkeleton } from "@/components/ui/roast-metrics"
 
 export default async function Home() {
-  const [rows, stats] = await Promise.all([getLeaderboard(3), getLeaderboardStats()])
+  const rows = await getLeaderboard(3)
 
   return (
     <main className="pb-20">
@@ -26,15 +28,9 @@ export default async function Home() {
           <CodeInputForm />
 
           {/* footer hint */}
-          <div className="flex items-center gap-6">
-            <span className="font-['IBM_Plex_Mono',ui-monospace,monospace] text-text-tertiary text-xs">
-              {stats.total.toLocaleString()} codes roasted
-            </span>
-            <span className="font-mono text-text-tertiary text-xs">·</span>
-            <span className="font-['IBM_Plex_Mono',ui-monospace,monospace] text-text-tertiary text-xs">
-              avg score: {stats.avgScore.toFixed(1)}/10
-            </span>
-          </div>
+          <Suspense fallback={<RoastMetricsSkeleton />}>
+            <RoastMetrics />
+          </Suspense>
         </section>
 
         {/* ── leaderboard preview ── */}
@@ -93,7 +89,10 @@ export default async function Home() {
 
           {/* fade hint */}
           <p className="text-center font-['IBM_Plex_Mono',ui-monospace,monospace] text-text-tertiary text-xs">
-            showing top 3 of {stats.total.toLocaleString()} · view full leaderboard &gt;&gt;
+            {"showing top 3 · "}
+            <Link href="/leaderboard" className="transition-colors hover:text-brand">
+              view full leaderboard &gt;&gt;
+            </Link>
           </p>
         </section>
       </div>
