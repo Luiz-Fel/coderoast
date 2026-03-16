@@ -77,7 +77,9 @@ export type LeaderboardRowCodeProps = ComponentProps<"div">
 function LeaderboardRowCode({ className, children, ...props }: LeaderboardRowCodeProps) {
   return (
     <div className={twMerge("min-w-0 flex-1", className)} {...props}>
-      <span className="block truncate font-mono text-text-secondary text-xs">{children}</span>
+      <span className="block whitespace-pre-wrap font-mono text-text-secondary text-xs [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3] overflow-hidden">
+        {children}
+      </span>
     </div>
   )
 }
