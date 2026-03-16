@@ -4,7 +4,7 @@ import { TRPCReactProvider } from "@/trpc/client"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "devroast",
+  title: "coderoast",
   description: "paste your code. get roasted.",
 }
 

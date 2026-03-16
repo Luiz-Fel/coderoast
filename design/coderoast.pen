@@ -55,7 +55,7 @@
                   "id": "8QdKv",
                   "name": "logoText",
                   "fill": "$text-primary",
-                  "content": "devroast",
+                  "content": "coderoast",
                   "fontFamily": "JetBrains Mono",
                   "fontSize": 18,
                   "fontWeight": "500"
@@ -1957,7 +1957,7 @@
                   "id": "qhnXJ",
                   "name": "logoText",
                   "fill": "$text-primary",
-                  "content": "devroast",
+                  "content": "coderoast",
                   "fontFamily": "JetBrains Mono",
                   "fontSize": 18,
                   "fontWeight": "500"
@@ -4180,7 +4180,7 @@
                   "id": "T5Rry",
                   "name": "logoText",
                   "fill": "$text-primary",
-                  "content": "devroast",
+                  "content": "coderoast",
                   "fontFamily": "JetBrains Mono",
                   "fontSize": 18,
                   "fontWeight": "500"
@@ -6241,7 +6241,7 @@
                   "id": "JvNIs",
                   "name": "logoText",
                   "fill": "$text-primary",
-                  "content": "devroast",
+                  "content": "coderoast",
                   "fontFamily": "$font-primary",
                   "fontSize": 20,
                   "fontWeight": "500"
@@ -7756,7 +7756,7 @@
                       "id": "AVTMH",
                       "name": "navName",
                       "fill": "$text-primary",
-                      "content": "devroast",
+                      "content": "coderoast",
                       "fontFamily": "JetBrains Mono",
                       "fontSize": 18,
                       "fontWeight": "500"

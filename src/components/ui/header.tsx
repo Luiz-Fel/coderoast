@@ -7,7 +7,7 @@ export function Header() {
         {/* logo */}
         <Link href="/" className="flex items-center gap-2">
           <span className="font-bold font-mono text-brand text-xl">&gt;</span>
-          <span className="font-medium font-mono text-lg text-text-primary">devroast</span>
+          <span className="font-medium font-mono text-lg text-text-primary">coderoast</span>
         </Link>
 
         {/* nav */}

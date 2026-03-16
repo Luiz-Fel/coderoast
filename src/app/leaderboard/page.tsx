@@ -3,7 +3,7 @@ import Link from "next/link"
 import { CodeBlock } from "@/components/ui/code-block"
 
 export const metadata: Metadata = {
-  title: "shame_leaderboard — devroast",
+  title: "shame_leaderboard — coderoast",
   description: "The most roasted code on the internet, ranked by shame.",
 }
 
