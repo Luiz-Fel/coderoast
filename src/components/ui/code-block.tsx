@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache"
 import type { ComponentProps } from "react"
 import type { BundledLanguage } from "shiki"
 import { codeToHtml } from "shiki"
@@ -29,6 +30,9 @@ export type CodeBlockBodyProps = ComponentProps<"div"> & {
 }
 
 async function CodeBlockBody({ code, lang, className, ...props }: CodeBlockBodyProps) {
+  "use cache"
+  cacheLife("hourly")
+
   const html = await codeToHtml(code, { lang, theme: "vesper" })
   const lineNumbers = Array.from({ length: code.split("\n").length }, (_, i) => i + 1)
 
@@ -40,7 +44,7 @@ async function CodeBlockBody({ code, lang, className, ...props }: CodeBlockBodyP
         aria-hidden
       >
         {lineNumbers.map((n) => (
-          <span key={n} className="block font-mono text-[13px] leading-[1.4] text-text-tertiary">
+          <span key={n} className="block font-mono text-[13px] text-text-tertiary leading-[1.4]">
             {n}
           </span>
         ))}

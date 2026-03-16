@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { Suspense } from "react"
 import type { BundledLanguage } from "shiki"
 import { getRoast } from "@/app/actions/get-roast"
 import { AnalysisCard } from "@/components/ui/analysis-card"
@@ -56,7 +57,20 @@ type Props = {
   params: Promise<{ id: string }>
 }
 
-export default async function RoastPage({ params }: Props) {
+function RoastPageSkeleton() {
+  return (
+    <main className="pb-20">
+      <div className="mx-auto flex max-w-[960px] flex-col gap-10 px-5 pt-12">
+        <div className="h-3 w-24 animate-pulse rounded-sm bg-bg-elevated" />
+        <div className="h-56 animate-pulse rounded-sm bg-bg-elevated" />
+        <div className="h-px w-full bg-border" />
+        <div className="h-72 animate-pulse rounded-sm bg-bg-elevated" />
+      </div>
+    </main>
+  )
+}
+
+async function RoastPageContent({ params }: Props) {
   const { id } = await params
   const roast = await getRoast(id)
 
@@ -164,5 +178,13 @@ export default async function RoastPage({ params }: Props) {
         )}
       </div>
     </main>
+  )
+}
+
+export default function RoastPage({ params }: Props) {
+  return (
+    <Suspense fallback={<RoastPageSkeleton />}>
+      <RoastPageContent params={params} />
+    </Suspense>
   )
 }
