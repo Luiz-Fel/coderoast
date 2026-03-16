@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core"
@@ -61,3 +62,15 @@ export const roastIssues = pgTable("roast_issues", {
   description: text().notNull(),
   sortOrder: integer().notNull().default(0),
 })
+
+export const roastRateLimits = pgTable(
+  "roast_rate_limits",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    key: varchar({ length: 128 }).notNull(),
+    windowStart: timestamp({ withTimezone: true }).notNull(),
+    count: integer().notNull().default(1),
+  },
+  (t) => [uniqueIndex("roast_rate_limits_key_window_idx").on(t.key, t.windowStart)]
+)

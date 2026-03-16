@@ -7,7 +7,6 @@ import { AnalysisCard } from "@/components/ui/analysis-card"
 import { CodeBlock } from "@/components/ui/code-block"
 import { DiffLine } from "@/components/ui/diff-line"
 import { ScoreRing } from "@/components/ui/score-ring"
-import { ShareButton } from "@/components/ui/share-button"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -116,11 +115,8 @@ async function RoastPageContent({ params }: Props) {
               <span>lang: {roast.language ?? "unknown"}</span>
               <span>·</span>
               <span>{roast.lineCount} lines</span>
-            </div>
-
-            {/* share */}
-            <div className="flex items-center">
-              <ShareButton />
+              <span>·</span>
+              <span>mode: {roast.mode}</span>
             </div>
           </div>
         </section>

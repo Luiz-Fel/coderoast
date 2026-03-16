@@ -1,5 +1,6 @@
 "use client"
 
+import { useMutation } from "@tanstack/react-query"
 import { ChevronDown } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
@@ -7,9 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
 import { detectLanguage } from "@/lib/detect-language"
 import { getLanguageLabel, SUPPORTED_LANGUAGES } from "@/lib/languages"
+import { MAX_ROAST_CHARS } from "@/lib/roast"
 import { highlightCode } from "@/lib/shiki-client"
-
-const MAX_CHARS = 2000
+import { useTRPC } from "@/trpc/client"
 
 const MOCK_CODE = `function calculateTotal(items) {
   var total = 0;
@@ -108,8 +109,21 @@ function LanguageSelector({ activeLang, isAuto, onSelect }: LanguageSelectorProp
 
 export function CodeInputForm() {
   const router = useRouter()
+  const trpc = useTRPC()
   const [code, setCode] = useState(MOCK_CODE)
   const [roastMode, setRoastMode] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const createRoast = useMutation(
+    trpc.roasts.create.mutationOptions({
+      onSuccess: (data) => {
+        router.push(`/roast/${data.id}`)
+      },
+      onError: (error) => {
+        setSubmitError(error.message || "failed to roast code. try again.")
+      },
+    })
+  )
 
   // Language state
   const [detectedLang, setDetectedLang] = useState<string>("javascript")
@@ -269,10 +283,23 @@ export function CodeInputForm() {
   const gutterHeight = lineCount * LINE_HEIGHT_PX + EDITOR_PADDING_Y * 2
 
   const charCount = code.length
-  const isOverLimit = charCount > MAX_CHARS
+  const isOverLimit = charCount > MAX_ROAST_CHARS
 
   function handleSubmit() {
-    router.push("/roast")
+    if (createRoast.isPending || isOverLimit) return
+
+    const normalizedCode = code.trim()
+
+    if (!normalizedCode) {
+      setSubmitError("paste some code before roasting.")
+      return
+    }
+
+    setSubmitError(null)
+    createRoast.mutate({
+      code: normalizedCode,
+      mode: roastMode ? "full_roast" : "brutally_honest",
+    })
   }
 
   return (
@@ -408,7 +435,7 @@ export function CodeInputForm() {
               isOverLimit ? "text-accent-red" : "text-text-tertiary",
             ].join(" ")}
           >
-            {charCount}/{MAX_CHARS}
+            {charCount}/{MAX_ROAST_CHARS}
           </span>
         </div>
       </div>
@@ -421,10 +448,20 @@ export function CodeInputForm() {
             {"// maximum sarcasm enabled"}
           </span>
         </div>
-        <Button variant="primary" onClick={handleSubmit} disabled={isOverLimit}>
-          $ roast_my_code
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={isOverLimit || createRoast.isPending || code.trim().length === 0}
+        >
+          {createRoast.isPending ? "$ roasting..." : "$ roast_my_code"}
         </Button>
       </div>
+
+      {submitError && (
+        <p className="font-['IBM_Plex_Mono',ui-monospace,monospace] text-critical text-xs">
+          {submitError}
+        </p>
+      )}
     </div>
   )
 }

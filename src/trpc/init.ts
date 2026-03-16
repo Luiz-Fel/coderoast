@@ -1,10 +1,16 @@
 import { initTRPC } from "@trpc/server"
-import { cache } from "react"
 import { db } from "@/db"
 
-export const createTRPCContext = cache(async () => {
-  return { db }
-})
+type TRPCContextOptions = {
+  req?: Request
+}
+
+export async function createTRPCContext(opts?: TRPCContextOptions) {
+  return {
+    db,
+    req: opts?.req,
+  }
+}
 
 type Context = Awaited<ReturnType<typeof createTRPCContext>>
 
