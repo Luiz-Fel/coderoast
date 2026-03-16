@@ -1,19 +1,15 @@
 import Link from "next/link"
 import { Suspense } from "react"
-import { getLeaderboard } from "@/app/actions/get-leaderboard"
 import { CodeInputForm } from "@/components/ui/code-input-form"
-import { LeaderboardRow } from "@/components/ui/leaderboard-row"
+import { LeaderboardPreview, LeaderboardPreviewSkeleton } from "@/components/ui/leaderboard-preview"
 import { RoastMetrics, RoastMetricsSkeleton } from "@/components/ui/roast-metrics"
 
 export default async function Home() {
-  const rows = await getLeaderboard(3)
-
   return (
     <main className="pb-20">
       <div className="mx-auto flex max-w-[960px] flex-col items-center gap-32 px-5 pt-20">
         {/* ── hero ── */}
         <section className="flex w-full flex-col items-center gap-8">
-          {/* title */}
           <div className="flex flex-col items-center gap-3 text-center">
             <h1 className="flex flex-wrap items-baseline justify-center gap-3 font-bold font-mono text-4xl leading-tight">
               <span className="text-brand">$</span>
@@ -23,71 +19,45 @@ export default async function Home() {
               {"// drop your code below and we'll rate it — brutally honest or full roast mode"}
             </p>
           </div>
-
-          {/* code input */}
           <CodeInputForm />
-
-          {/* footer hint */}
-          <Suspense fallback={<RoastMetricsSkeleton />}>
-            <RoastMetrics />
-          </Suspense>
         </section>
 
         {/* ── leaderboard preview ── */}
         <section className="flex w-full flex-col gap-6">
-          {/* section header */}
+          {/* hero section: title + subtitle + stats */}
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-brand text-sm">#</span>
-                <h2 className="font-medium font-mono text-base text-text-primary">
-                  shame_leaderboard
-                </h2>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-brand text-sm">&gt;</span>
+                  <h2 className="font-bold font-mono text-text-primary text-xl">
+                    shame_leaderboard
+                  </h2>
+                </div>
+                <p className="font-['IBM_Plex_Mono',ui-monospace,monospace] text-[13px] text-text-secondary">
+                  {"// the most roasted code on the internet"}
+                </p>
               </div>
               <Link
                 href="/leaderboard"
-                className="flex items-center gap-1 border border-border px-3 py-1.5 font-mono text-text-secondary text-xs transition-colors hover:border-brand hover:text-brand"
+                className="flex shrink-0 items-center gap-1 border border-border px-3 py-1.5 font-mono text-text-secondary text-xs transition-colors hover:border-brand hover:text-brand"
               >
                 $ view_all &gt;&gt;
               </Link>
             </div>
-            <p className="font-['IBM_Plex_Mono',ui-monospace,monospace] text-[13px] text-text-tertiary">
-              {"// the worst code on the internet, ranked by shame"}
-            </p>
+
+            {/* stats row — acima dos cards, fora do border box */}
+            <Suspense fallback={<RoastMetricsSkeleton />}>
+              <RoastMetrics />
+            </Suspense>
           </div>
 
-          {/* table */}
-          <div className="flex flex-col border border-border">
-            {/* table header */}
-            <LeaderboardRow.Root className="border-b bg-bg-surface py-2.5">
-              <LeaderboardRow.Rank asLabel>
-                <span className="font-mono text-text-tertiary text-xs">rank</span>
-              </LeaderboardRow.Rank>
-              <LeaderboardRow.Score>
-                <span className="font-mono text-text-tertiary text-xs">score</span>
-              </LeaderboardRow.Score>
-              <LeaderboardRow.Code>
-                <span className="font-mono text-text-tertiary text-xs">code</span>
-              </LeaderboardRow.Code>
-              <LeaderboardRow.Language>
-                <span className="font-mono text-text-tertiary text-xs">lang</span>
-              </LeaderboardRow.Language>
-            </LeaderboardRow.Root>
+          {/* cards */}
+          <Suspense fallback={<LeaderboardPreviewSkeleton />}>
+            <LeaderboardPreview />
+          </Suspense>
 
-            {/* rows */}
-            {rows.map((row) => (
-              <Link key={row.id} href={`/roast/${row.id}`} className="block">
-                <LeaderboardRow.Root className="transition-colors hover:bg-bg-surface">
-                  <LeaderboardRow.Rank>{row.rank}</LeaderboardRow.Rank>
-                  <LeaderboardRow.Score value={row.score} />
-                  <LeaderboardRow.Code>{row.codePreview}</LeaderboardRow.Code>
-                  <LeaderboardRow.Language>{row.language ?? "—"}</LeaderboardRow.Language>
-                </LeaderboardRow.Root>
-              </Link>
-            ))}
-          </div>
-
-          {/* fade hint */}
+          {/* bottom link */}
           <p className="text-center font-['IBM_Plex_Mono',ui-monospace,monospace] text-text-tertiary text-xs">
             {"showing top 3 · "}
             <Link href="/leaderboard" className="transition-colors hover:text-brand">

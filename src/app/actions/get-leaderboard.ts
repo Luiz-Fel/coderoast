@@ -31,7 +31,12 @@ export async function getLeaderboard(limit = 3): Promise<LeaderboardRow[]> {
     id: row.id,
     rank: index + 1,
     score: Number(row.score),
-    codePreview: row.code.replace(/\s+/g, " ").trim().slice(0, 120),
+    codePreview: row.code
+      .split("\n")
+      .slice(0, 3)
+      .map((line) => line.replace(/[ \t]+/g, " ").trimEnd())
+      .join("\n")
+      .trim(),
     language: row.language,
   }))
 }
