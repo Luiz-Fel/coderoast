@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { AnalysisCard } from "@/components/ui/analysis-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -164,7 +165,9 @@ export default async function ComponentsPage() {
         <Section title="CodeBlock">
           <CodeBlock.Root>
             <CodeBlock.Header filename="roast.ts" />
-            <CodeBlock.Body code={SAMPLE_CODE} lang="typescript" />
+            <Suspense fallback={<div className="h-28 animate-pulse rounded-sm bg-bg-elevated" />}>
+              <CodeBlock.Body code={SAMPLE_CODE} lang="typescript" />
+            </Suspense>
           </CodeBlock.Root>
         </Section>
 
