@@ -1,12 +1,48 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import type { BundledLanguage } from "shiki"
-import { getRoast } from "@/app/actions/get-roast"
 import { AnalysisCard } from "@/components/ui/analysis-card"
 import { CodeBlock } from "@/components/ui/code-block"
 import { DiffLine } from "@/components/ui/diff-line"
 import { ScoreRing } from "@/components/ui/score-ring"
+import { ShareButton } from "@/components/ui/share-button"
+import { caller } from "@/trpc/server"
+
+// ── Metadata ──────────────────────────────────────────────────────────────────
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+
+  let roast: Awaited<ReturnType<typeof caller.roasts.getById>>
+  try {
+    roast = await caller.roasts.getById({ id })
+  } catch {
+    return {}
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+  const ogImageUrl = `${appUrl}/api/og/${id}`
+  const title = `${roast.score}/10 — ${roast.verdict} | coderoast`
+  const description = roast.roastQuote
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: ogImageUrl, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImageUrl],
+    },
+  }
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -72,9 +108,13 @@ function RoastPageSkeleton() {
 
 async function RoastPageContent({ params }: Props) {
   const { id } = await params
-  const roast = await getRoast(id)
 
-  if (!roast) notFound()
+  let roast: Awaited<ReturnType<typeof caller.roasts.getById>>
+  try {
+    roast = await caller.roasts.getById({ id })
+  } catch {
+    notFound()
+  }
 
   const lang = (roast.language ?? "text") as BundledLanguage
   const diffLines = roast.suggestedFix ? parseDiff(roast.suggestedFix) : []
@@ -118,6 +158,8 @@ async function RoastPageContent({ params }: Props) {
               <span>·</span>
               <span>mode: {roast.mode}</span>
             </div>
+
+            <ShareButton className="w-fit" />
           </div>
         </section>
 

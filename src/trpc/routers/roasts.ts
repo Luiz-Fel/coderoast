@@ -1,7 +1,6 @@
 import { TRPCError } from "@trpc/server"
-import { asc, avg, count } from "drizzle-orm"
-import { revalidateTag, unstable_cache } from "next/cache"
-import { cacheLife, cacheTag } from "next/cache"
+import { asc, avg, count, eq } from "drizzle-orm"
+import { cacheLife, cacheTag, revalidateTag, unstable_cache } from "next/cache"
 import { z } from "zod"
 import { db } from "@/db"
 import { roastIssues, roasts } from "@/db/schema"
@@ -87,6 +86,42 @@ export const roastsRouter = createTRPCRouter({
   leaderboard: baseProcedure
     .input(z.object({ limit: z.number().int().min(1).max(50).default(3) }))
     .query(({ input }) => getCachedLeaderboard(input.limit)),
+
+  getById: baseProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [roast] = await ctx.db.select().from(roasts).where(eq(roasts.id, input.id)).limit(1)
+
+      if (!roast) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Roast not found." })
+      }
+
+      const issues = await ctx.db
+        .select()
+        .from(roastIssues)
+        .where(eq(roastIssues.roastId, input.id))
+        .orderBy(asc(roastIssues.sortOrder))
+
+      return {
+        id: roast.id,
+        createdAt: roast.createdAt,
+        code: roast.code,
+        language: roast.language ?? null,
+        lineCount: roast.lineCount,
+        mode: roast.mode,
+        score: Number(roast.score),
+        verdict: roast.verdict,
+        roastQuote: roast.roastQuote,
+        suggestedFix: roast.suggestedFix ?? null,
+        issues: issues.map((i) => ({
+          id: i.id,
+          severity: i.severity,
+          title: i.title,
+          description: i.description,
+          sortOrder: i.sortOrder,
+        })),
+      }
+    }),
 
   create: baseProcedure
     .input(

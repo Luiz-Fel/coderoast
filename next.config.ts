@@ -2,6 +2,7 @@ import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   /* config options here */
+  serverExternalPackages: ["@takumi-rs/core", "@takumi-rs/image-response", "@takumi-rs/helpers"],
   cacheComponents: true,
   cacheLife: {
     hourly: {

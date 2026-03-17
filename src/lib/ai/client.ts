@@ -1,3 +1,4 @@
+import { analyzeCodeWithGemini, isGeminiQuotaError } from "@/lib/ai/gemini"
 import { analyzeCodeWithOpenRouter } from "@/lib/ai/openrouter"
 import type { RoastMode } from "@/lib/roast"
 
@@ -7,11 +8,13 @@ type AnalyzeCodeInput = {
 }
 
 export async function analyzeCode(input: AnalyzeCodeInput) {
-  const provider = process.env.AI_PROVIDER ?? "openrouter"
-
-  if (provider === "openrouter") {
-    return analyzeCodeWithOpenRouter(input)
+  try {
+    return await analyzeCodeWithGemini(input)
+  } catch (err) {
+    if (isGeminiQuotaError(err)) {
+      console.warn("[ai/client] Gemini quota exceeded — falling back to OpenRouter")
+      return await analyzeCodeWithOpenRouter(input)
+    }
+    throw err
   }
-
-  throw new Error(`Unsupported AI_PROVIDER: ${provider}`)
 }
