@@ -216,7 +216,7 @@ export function CodeInputForm() {
     // Reset to auto first so shrinking content reduces the height correctly
     textarea.style.height = "auto"
     textarea.style.height = `${textarea.scrollHeight}px`
-  }, [])
+  }, [code])
 
   // ── Scroll sync: gutter follows the scroll wrapper ────────────────────────
   // The overlay scrolls naturally with the wrapper (it's in the same scroll
