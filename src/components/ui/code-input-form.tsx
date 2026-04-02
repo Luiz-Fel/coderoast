@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation } from "@tanstack/react-query"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, RefreshCw } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,130 @@ import { getLanguageLabel, SUPPORTED_LANGUAGES } from "@/lib/languages"
 import { MAX_ROAST_CHARS } from "@/lib/roast"
 import { highlightCode } from "@/lib/shiki-client"
 import { useTRPC } from "@/trpc/client"
+
+// ─── Loading Overlay ──────────────────────────────────────────────────────────
+
+const LOADING_STEPS = [
+  "$ initializing roast engine...",
+  "$ parsing your code...",
+  "$ consulting the roast oracle...",
+  "$ generating insults...",
+  "$ calculating shame score...",
+]
+
+function LoadingOverlay({ showFallback }: { showFallback: boolean }) {
+  const [stepIndex, setStepIndex] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const [cursor, setCursor] = useState(true)
+
+  // Advance through loading steps
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStepIndex((prev) => Math.min(prev + 1, LOADING_STEPS.length - 1))
+    }, 1100)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Progress bar animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        // Slow down as it approaches 90%, never reaches 100% until done
+        const remaining = 90 - prev
+        return prev + remaining * 0.06
+      })
+    }, 120)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Blinking cursor
+  useEffect(() => {
+    const interval = setInterval(() => setCursor((c) => !c), 530)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-start justify-center gap-5 bg-bg/90 px-8 backdrop-blur-sm">
+      {/* Steps log */}
+      <div className="flex flex-col gap-1.5">
+        {LOADING_STEPS.slice(0, stepIndex + 1).map((step, i) => (
+          <p
+            // biome-ignore lint/suspicious/noArrayIndexKey: static list, order never changes
+            key={i}
+            className={[
+              "font-mono text-xs transition-opacity duration-300",
+              i === stepIndex ? "text-text-primary" : "text-text-tertiary",
+            ].join(" ")}
+          >
+            {step}
+            {i === stepIndex && <span className={cursor ? "opacity-100" : "opacity-0"}>{"_"}</span>}
+          </p>
+        ))}
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full max-w-xs">
+        <div className="h-px w-full bg-bg-elevated">
+          <div
+            className="h-px bg-brand transition-all duration-150 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <p className="mt-1.5 font-mono text-[10px] text-text-tertiary tabular-nums">
+          {Math.round(progress)}%
+        </p>
+      </div>
+
+      {/* Fallback message — appears after 6s */}
+      {showFallback && (
+        <div className="flex flex-col gap-1 border-accent-amber border-l-2 pl-3">
+          <p className="font-mono text-accent-amber text-xs">
+            {"// this is taking longer than usual..."}
+          </p>
+          <p className="font-mono text-text-tertiary text-xs">
+            {"// hang tight, the AI is still cooking."}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Error Screen ─────────────────────────────────────────────────────────────
+
+function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex w-full max-w-195 flex-col gap-6 border border-border bg-[#101010] px-8 py-10">
+      {/* window chrome */}
+      <div className="flex items-center gap-3">
+        <span className="size-2.5 rounded-full bg-accent-red" aria-hidden />
+        <span className="size-2.5 rounded-full bg-accent-amber" aria-hidden />
+        <span className="size-2.5 rounded-full bg-accent-green" aria-hidden />
+      </div>
+
+      {/* error content */}
+      <div className="flex flex-col gap-4">
+        <p className="font-mono text-accent-red text-sm">{"$ roast_my_code --error"}</p>
+
+        <div className="flex flex-col gap-1.5 border-critical border-l-2 pl-4">
+          <p className="font-mono text-text-secondary text-xs">{"// something went wrong"}</p>
+          <p className="font-mono text-text-tertiary text-xs">{`// ${message}`}</p>
+        </div>
+
+        <div className="flex flex-col gap-1 font-mono text-[11px] text-text-tertiary">
+          <p>{"// the roast engine exploded."}</p>
+          <p>{"// try submitting again or come back later."}</p>
+        </div>
+      </div>
+
+      {/* retry button */}
+      <Button variant="outline" onClick={onRetry} className="gap-2 self-start">
+        <RefreshCw size={12} aria-hidden />
+        {"$ try_again"}
+      </Button>
+    </div>
+  )
+}
 
 const MOCK_CODE = `function calculateTotal(items) {
   var total = 0;
@@ -113,6 +237,11 @@ export function CodeInputForm() {
   const [code, setCode] = useState(MOCK_CODE)
   const [roastMode, setRoastMode] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Fatal error replaces the entire form with an error screen
+  const [fatalError, setFatalError] = useState<string | null>(null)
+  // Fallback message shown after 6s of pending
+  const [showFallback, setShowFallback] = useState(false)
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const createRoast = useMutation(
     trpc.roasts.create.mutationOptions({
@@ -120,10 +249,40 @@ export function CodeInputForm() {
         router.push(`/roast/${data.id}`)
       },
       onError: (error) => {
-        setSubmitError(error.message || "failed to roast code. try again.")
+        const msg = error.message || "failed to roast code. try again."
+        // Rate limit errors stay inline; everything else shows the error screen
+        if (error.data?.code === "TOO_MANY_REQUESTS") {
+          setSubmitError(msg)
+        } else {
+          setFatalError(msg)
+        }
       },
     })
   )
+
+  const { isPending } = createRoast
+
+  // Start/stop the 6-second fallback timer based on pending state
+  useEffect(() => {
+    if (isPending) {
+      setShowFallback(false)
+      fallbackTimerRef.current = setTimeout(() => {
+        setShowFallback(true)
+      }, 6000)
+    } else {
+      setShowFallback(false)
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current)
+        fallbackTimerRef.current = null
+      }
+    }
+    return () => {
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current)
+        fallbackTimerRef.current = null
+      }
+    }
+  }, [isPending])
 
   // Language state
   const [detectedLang, setDetectedLang] = useState<string>("javascript")
@@ -296,16 +455,33 @@ export function CodeInputForm() {
     }
 
     setSubmitError(null)
+    setFatalError(null)
     createRoast.mutate({
       code: normalizedCode,
       mode: roastMode ? "full_roast" : "brutally_honest",
     })
   }
 
+  // Show the error screen when a fatal (non-rate-limit) error occurs
+  if (fatalError) {
+    return (
+      <ErrorScreen
+        message={fatalError}
+        onRetry={() => {
+          setFatalError(null)
+          setSubmitError(null)
+        }}
+      />
+    )
+  }
+
   return (
     <div className="flex w-full max-w-195 flex-col gap-4">
-      {/* editor shell */}
-      <div className="overflow-hidden border border-border bg-[#101010]">
+      {/* editor shell — relative so the loading overlay can be positioned inside */}
+      <div className="relative overflow-hidden border border-border bg-[#101010]">
+        {/* loading overlay — shown while the roast mutation is in flight */}
+        {isPending && <LoadingOverlay showFallback={showFallback} />}
+
         {/* window chrome header */}
         <div className="flex h-10 shrink-0 items-center gap-3 border-border border-b px-4">
           <span className="size-2.5 rounded-full bg-accent-red" aria-hidden />
